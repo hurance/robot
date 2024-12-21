@@ -1,0 +1,1969 @@
+<html>
+	<head>
+        <title>Dash - WebGL Self-Driving Car Simulator</title>
+        <link rel="stylesheet" href="vendor/bulma.min.css" />
+        <link rel="stylesheet" href="css/dash.css" />
+        <link rel="stylesheet" href="css/login.css" />
+        <meta charset="utf-8" />
+        <script type="text/javascript" src="js/EventEmitter.min.js"></script>
+        <script type="text/javascript" src="js/roslib.min.js"></script>
+        <script type="text/javascript" src="js/ros3d.js"></script>
+        <script type="text/javascript" src="js/nipplejs.js"></script>
+               
+	</head>
+	<body>
+        <div id="container">
+            <div id="dashboard" class="gui-box sim-mode-box">
+                <div id="planner-error" class="gui-box is-size-7 is-hidden" style="background: #422b;">
+                    <span class="icon has-text-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </span>
+                    <span class="has-text-grey-lighter" style="position: relative; top: -2px;">Error initializing motion planner. <a href="https://github.com/mattbradley/dash#browser-support" target="_blank">Check if your browser is supported</a>.</span>
+                </div>
+                <!-- <div id="controls" class="is-pulled-left">
+                    <div id="brake"></div>
+                    <div id="gas"></div>
+                    <div id="gear"></div>
+                    <div id="wheel-wrapper">
+                        <div id="wheel">
+                            <div id="wheel-marker"></div>
+                        </div>
+                        <div id="wheel-pie">
+                            <div id="wheel-pie-left"></div>
+                            <div id="wheel-pie-right"></div>
+                        </div>
+                    </div>
+                </div> -->
+                <div id="stats" class="is-pulled-right">
+                    <div class="columns is-gapless" style="margin-bottom: 16px;">
+                        <div class="column has-text-centered">
+                            <div  class="heading has-text-white">前进速度</div>
+                            <div id="speed" class="is-size-6 has-text-grey-lighter has-text-weight-bold">&mdash;</div>
+                            <div id="speed-units" class="units-button is-size-7 has-text-white">km/h</div>
+                        </div>
+                        <!-- <div class="column has-text-centered">
+                            <div class="heading has-text-grey">转弯速度</div>
+                            <div id="speed-z" class="is-size-6 has-text-grey-lighter has-text-weight-bold">&mdash;</div>
+                            <div id="speed-units-z" class="units-button is-size-7 has-text-grey">m/s</div> -->
+                        <!-- <div class="column has-text-centered">
+                            <div class="heading has-text-grey">转弯速度</div>
+                            <div id="station" class="is-size-6 has-text-grey-lighter has-text-weight-bold">&mdash;</div>
+                            <div id="station-units" class="units-button is-size-7 has-text-grey">rad/s</div>
+                        </div> -->
+                        <div class="column has-text-centered">
+                            <div class="heading has-text-white">左轮速度</div>
+                            <div id="leftspeed" class="is-size-6 has-text-grey-lighter has-text-weight-bold">&mdash;</div>
+                            <div id="leftspeed-units" class="units-button is-size-7 has-text-white">km/h</div>
+                        </div>
+                        <div class="column has-text-centered">
+                            <div class="heading has-text-white">右轮速度</div>
+                            <div id="rightspeed" class="is-size-6 has-text-grey-lighter has-text-weight-bold">&mdash;</div>
+                            <div id="rightspeed-units" class="units-button is-size-7 has-text-white">km/h</div>
+                        </div>
+                        <div class="column has-text-centered">
+                            <div class="heading has-text-white">发动机转速</div>
+                            <div id="enginespeed" class="is-size-6 has-text-grey-lighter has-text-weight-bold">&mdash;</div>
+                            <div id="enginespeed-units" class="units-button is-size-7 has-text-white">r/min</div>
+                        </div>
+                        <div class="column has-text-centered">
+                            <div class="heading has-text-white">累计里程</div>
+                            <div id="accodom" class="is-size-6 has-text-grey-lighter has-text-weight-bold">&mdash;</div>
+                            <div id="accodom-units" class="units-button is-size-7 has-text-white">km</div>
+                        </div>
+
+                        <div class="column has-text-centered">
+                            <div class="heading has-text-white">经度</div>
+                            <div id="lon" class="is-size-6 has-text-grey-lighter has-text-weight-bold">&mdash;</div>
+                            <div class="is-size-7 has-text-white">°</div>
+                        </div>
+                        <div class="column has-text-centered">
+                            <div class="heading has-text-white">纬度</div>
+                            <div id="lat" class="is-size-6 has-text-grey-lighter has-text-weight-bold">&mdash;</div>
+                            <div class="is-size-7 has-text-white">°</div>
+                        </div>
+                        <div class="column has-text-centered">
+                            <div class="heading has-text-white">高度</div>
+                            <div id="height" class="is-size-6 has-text-grey-lighter has-text-weight-bold">&mdash;</div>
+                            <div class="is-size-7 has-text-white">km</div>
+                        </div>
+
+                        <div class="column has-text-centered">
+                            <div class="heading has-text-white">横滚角</div>
+                            <div id="roll" class="is-size-6 has-text-grey-lighter has-text-weight-bold">&mdash;</div>
+                            <div class="is-size-7 has-text-white">°</div>
+                        </div>
+                        <div class="column has-text-centered">
+                            <div class="heading has-text-white">俯仰角</div>
+                            <div id="pitch" class="is-size-6 has-text-grey-lighter has-text-weight-bold">&mdash;</div>
+                            <div class="is-size-7 has-text-white">°</div>
+                        </div>
+                        <div class="column has-text-centered">
+                            <div class="heading has-text-white">偏航角</div>
+                            <div id="plan-time" class="is-size-6 has-text-grey-lighter has-text-weight-bold">&mdash;</div>
+                            <div class="is-size-7 has-text-white">°</div>
+                        </div>
+                    </div>
+                    <!-- <div class="columns is-gapless">
+                        <div class="column">
+
+                            <div class="is-pulled-right">
+                                
+                            <div  class="is-small is-static is-pulled-left">限制速度：
+                                
+                                <input type="text"  class="player-num" id="player" value="2" max="4" min="0" onblur="on_change()">
+                                m/s
+                                <button class="btn-sub" id="btnSub" onclick="less()"></button>
+                                <input type="range" id="slider" size="100px" min="0" max="4" step="0.2" onchange="moveChange()" >
+                                <button class="btn-add" id="btnAdd" onclick="plus()"></button>
+                            </div>
+                            
+                                <div class="buttons has-addons" style="padding-left: 8px;">
+                                    <span id="mode-manual" onclick="manual()" class="button is-small is-dark is-outlined is-inverted">人工控制</span>
+                                    <span id="mode-autonomous" onclick="autonomous()" class="button is-small is-dark is-outlined is-inverted">自动驾驶</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div> -->
+                </div>
+                
+                <!-- <div id = "camera" style="display: none;">
+                    <img id = "camimg" height="300" width="700" src="">
+                </div> -->
+                <!-- <div id = "pointcloud" style="display: none;">
+
+                </div> -->
+                <div id = "pose" style="display: none;">
+
+                </div>
+            </div>
+            <div id="config-box" class="gui-box sim-mode-box">
+                <div id="show-config-box">
+                    
+                    
+                    <!-- &nbsp; -->
+                    <div id="show-config-button" style="margin-right: 10px;height: 60px;width: 60px;border-radius: 30px;" class="button is-small is-dark is-outlined is-inverted is-hidden" title="Planner Config">
+                        <span class="icon is-medium" >
+                            <i class="fas fa-lg fa-cog"></i>
+                        </span>
+                    </div>
+                </div>
+                
+                <div id="config-box-content" class="is-hidden">
+                    <div class="is-clearfix">
+                        <div class="field is-grouped is-pulled-right">
+                            <div class="control">
+                                <div id="restore-defaults-config-button" class="button is-small is-danger" title="Restore Defaults">
+                                    <span class="icon is-medium">
+                                        <i class="fas fa-lg fa-undo-alt"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="control">
+                                <div id="save-config-button" class="button is-small is-success" title="Save Config">
+                                    <span class="icon is-medium">
+                                        <i class="fas fa-lg fa-save"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="control">
+                                <div id="hide-config-button" class="button is-small is-dark is-outlined is-inverted" title="Close">
+                                    <span class="icon is-medium">
+                                        <i class="fas fa-lg fa-times"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="title is-5 has-text-grey-lighter" style="padding-top: 2px; padding-right: 8px; background: transparent; border: none;">参数配置</div>
+                    </div>
+                    <div style="margin-top: 16px; max-height: 400px; overflow-y: scroll;">
+                        <form id="config-form"></form>
+                    </div>
+                </div>
+            </div>
+
+            <div id="user-box" class=" sim-mode-box">
+                <div id="show-welcome-modal" style="height: 60px;width: 60px;border-radius: 30px;" class="button is-small is-dark is-outlined is-inverted" title="About Dash">
+                    <span class="icon is-medium" >
+                        <i class="fas fa-lg fa-user"></i>
+                    </span>
+                </div>
+            </div>
+
+            <div id="stop-box" class=" sim-mode-box">
+                <div id="play-stop" onclick="stopcar()" style="background-color: red; margin-right: 2%;margin-top:2%; height: 100px;width: 140px;border-radius: 20px;" class="niceButton button is-dark is-outlined is-inverted">
+                    <!-- <span class="icon is-medium" style="font-size: xx-large;" > -->
+                        <!-- <i class="fas fa-lg fa-pause"></i> -->
+                         停止
+                    <!-- </span> -->
+                </div>
+            </div>
+            
+
+            <div id="editor-enabler" class="gui-box sim-mode-box">
+                <!-- <div class="button is-small is-static is-pulled-left" style="background: transparent; border: none;">
+                    <span class="icon is-medium has-text-grey-lighter">
+                        <i class="fas fa-lg fa-road"></i>
+                    </span>
+                </div> -->
+                <div class="field is-grouped" style="padding-left: 8px;">
+                    <div class="control">
+                        <span id="scenario-play" class="button is-small is-dark is-outlined is-inverted is-hidden" title="Play Scenario">
+                            <span class="icon is-medium">
+                                <i class="fas fa-lg fa-play"></i>
+                            </span>
+                        </span>
+                        <span id="scenario-pause" class="button is-small is-dark is-outlined is-inverted is-hidden" title="Pause Scenario">
+                            <span class="icon is-medium">
+                                <i class="fas fa-lg fa-pause"></i>
+                            </span>
+                        </span>
+                        <span id="scenario-restart" class="button is-small is-dark is-outlined is-inverted" title="Restart Scenario">
+                            <span class="icon is-medium">
+                                <i class="fas fa-lg fa-undo-alt"></i>
+                            </span>
+                        </span>
+                    </div>
+                    <div class="control"></div>
+
+                    <div class="control">
+                        <span id="scenario-camera" onclick="opencamera()" class="button is-small is-dark is-outlined is-inverted" title="camera Scenario">
+                            <span class="icon is-medium">
+                                <i class="fa fa-camera"></i>
+                            </span>
+                        </span>
+                        <span id="scenario-point" onclick="openpointcloud()" class="button is-small is-dark is-outlined is-inverted" title="point Scenario">
+                            <span class="icon is-medium">
+                                <i class="fas fa-lg fa-road"></i>
+                            </span>
+                        </span>
+                        <span id="scenario-pose" class="button is-small is-dark is-outlined is-inverted" title="pose Scenario">
+                            <span class="icon is-medium">
+                                <i class="fas fa-location-arrow"></i>
+                            </span>
+                        </span>
+                    </div>
+                    <div class="control"></div>
+
+                    <div class="control">
+                        <span id="editor-enable" class="button is-small is-dark is-outlined is-inverted">编辑轨迹</span>
+                        <span id="simulator-load" class="button is-small is-dark is-outlined is-inverted">加载轨迹</span>
+                        <span id="log" class="button is-small is-dark is-outlined is-inverted">日志分析</span>
+                    </div>
+                </div>
+            </div>
+            <!-- <div id="editor-scenario-info" class="gui-box edit-mode-box is-hidden has-text-right allow-user-select">
+                <div id="editor-scenario-name" class="title is-5 has-text-grey-lighter" title="Untitled" style="line-height: 1.4;">Untitled</div>
+                <div class="subtitle is-7">
+                    <span class="has-text-grey">Last Saved:</span>
+                    <span id="editor-scenario-saved-at" class="has-text-grey-lighter">Unsaved</span>
+                </div>
+            </div> -->
+            <div class="edit-mode-box is-hidden">
+                <div id="editor-road-box" class="gui-box is-hidden">
+                    <div class="field is-horizontal">
+                        <div class="field-label is-small" style="flex-grow: 100;">
+                            <label class="label has-text-grey-light" for="editor-initial-speed">初始速度</label>
+                        </div>
+                        <div class="field-body">
+                            <div class="field has-addons" style="width: 90px;">
+                                <div class="control" style="margin-right: 0.5rem;">
+                                    <input id="editor-initial-speed" class="input is-small" type="text" style="width: 60px;" />
+                                </div>
+                                <span class="is-size-7 has-text-grey" style="padding-top: 0.375rem;">m/s</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="field is-horizontal">
+                        <div class="field-label is-small" style="flex-grow: 100;">
+                            <label class="label has-text-grey-light" for="editor-speed-limit">速度限制</label>
+                        </div>
+                        <div class="field-body">
+                            <div class="field has-addons" style="width: 90px;">
+                                <div class="control" style="margin-right: 0.5rem;">
+                                    <input id="editor-speed-limit" class="input is-small" type="text" style="width: 60px;" />
+                                </div>
+                                <span class="is-size-7 has-text-grey" style="padding-top: 0.375rem;">m/s</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="field is-horizontal">
+                        <div class="field-label is-small" style="flex-grow: 100;">
+                            <label class="label has-text-grey-light">车道偏好</label>
+                        </div>
+                        <div class="field-body">
+                            <div class="field has-addons" style="width: 90px;">
+                                <div class="control">
+                                    <div id="editor-lane-left" class="button is-small is-dark is-outlined is-inverted">
+                                        <span class="icon is-medium">
+                                            <i class="fas fa-lg fa-angle-left"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="control">
+                                    <div id="editor-lane-right" class="button is-small is-dark is-outlined is-inverted">
+                                        <span class="icon is-medium">
+                                            <i class="fas fa-lg fa-angle-right"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="editor-dynamic-obstacles-box" class="gui-box is-hidden">
+                    <div class="is-clearfix">
+                        <div class="field is-pulled-right">
+                            <div class="control">
+                                <div id="editor-add-dynamic-obstacle" class="button is-small is-dark is-outlined is-inverted" title="Add Dynamic Obstacle">
+                                    <span class="icon is-medium">
+                                        <i class="fas fa-lg fa-plus"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="title is-5 has-text-grey-lighter" style="padding-top: 2px; padding-right: 8px; background: transparent; border: none;">动态障碍物</div>
+                    </div>
+                    <div class="columns is-gapless has-text-weight-bold">
+                        <div class="column is-1"></div>
+                        <div class="column is-3">
+                            <abbr class="is-size-7 has-text-grey-lighter" title="Determines the size and shape of the dynamic obstacle">类型</abbr>
+                        </div>
+                        <div class="column is-1 has-text-centered">
+                            <abbr class="is-size-7 has-text-grey-lighter" style="position: relative; left: -5px;" title="Check to align parallel to the road; uncheck to align perpendicular">平行线</abbr>
+                        </div>
+                        <div class="column is-3 has-text-centered">
+                            <abbr class="is-size-7 has-text-grey-lighter" title="Initial station-latitude position; station is in meters, and latitude is normalized where -1 is the left boundary and +1 is the right boundary">SL 位置</abbr>
+                        </div>
+                        <div class="column is-3 has-text-centered">
+                            <abbr class="is-size-7 has-text-grey-lighter" title="Station-latitude velocity in m/s">SL 速度</abbr>
+                        </div>
+                        <div class="column is-1"></div>
+                    </div>
+                    <div id="editor-dynamic-obstacle-forms" style="margin-top: 16px; max-height: 400px; overflow-y: scroll;"></div>
+                </div>
+            </div>
+            <div id="editor-stats" class="gui-box edit-mode-box is-hidden">
+                <div id="editor-stats-sl" class="gui-box">
+                    <div class="button is-small is-static has-text-grey-light is-paddingless" style="background: transparent; border: none;">
+                        S:&nbsp;<b id="editor-stats-station">0</b>m
+                    </div>
+                    &nbsp;
+                    <div class="button is-small is-static has-text-grey-light is-paddingless" style="background: transparent; border: none;">
+                        L:&nbsp;<b id="editor-stats-latitude">0</b>m
+                    </div>
+                </div>
+                <div class="button is-small is-static has-text-grey-light is-paddingless" style="background: transparent; border: none;">
+                    路径长度:&nbsp;<b id="editor-stats-road-length">0.0</b>m
+                </div>
+                &nbsp;
+                <div class="button is-small is-static has-text-grey-light is-paddingless" style="background: transparent; border: none;">
+                    静态障碍物:&nbsp;<b id="editor-stats-static-obstacles">0</b>
+                </div>
+                &nbsp;
+                <div class="button is-small is-static has-text-grey-light is-paddingless" style="background: transparent; border: none;">
+                    动态障碍物:&nbsp;<b id="editor-stats-dynamic-obstacles">0</b>
+                </div>
+            </div>
+            <div id="editor-controls" class="gui-box edit-mode-box is-hidden">
+                <div id="editor-help" class="gui-box is-size-7 has-text-grey">
+                    <div id="editor-help-path" class="is-hidden">
+                        <div class="gui-box flex">
+                            <div class="has-text-weight-bold has-text-right" style="margin-right: 0.75rem;">
+                                <div>Left-click</div>
+                                <div>Left-click + Drag</div>
+                                <div>Shift + Left-click</div>
+                                <div>Right-click + Drag</div>
+                            </div>
+                            <div>
+                                <div>Place road anchor</div>
+                                <div>Move road anchor</div>
+                                <div>Delete road anchor</div>
+                                <div>Pan view</div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div id="editor-help-static-obstacles" class="is-hidden">
+                        <div class="gui-box flex">
+                            <div class="has-text-weight-bold has-text-right" style="display: flex; flex-direction: column; margin-right: 0.75rem;">
+                                <div style="flex-grow: 2; display: flex; align-items: center; justify-content: flex-end;">Left-click + Drag</div>
+                                <div>Shift + Left-click</div>
+                                <div>Ctrl + Left-click + Drag</div>
+                                <div>Right-click + Drag</div>
+                            </div>
+                            <div>
+                                <div>Place new obstacle</div>
+                                <div><i>or</i> Move obstacle</div>
+                                <div>Delete obstacle</div>
+                                <div>Rotate obstacle</div>
+                                <div>Pan view</div>
+                            </div>
+                        </div>
+                        <div>
+                            <i>静态障碍物</i> 模拟过程中请勿移动。它们可以用来
+                            代表停放的汽车、道路碎片、建筑区域等。
+                        </div>
+                    </div>
+                    <div id="editor-help-dynamic-obstacles" class="is-hidden">
+                        <i>动态障碍物</i> 将根据他们的速度沿着道路移动，从他们的出发点
+                        初始站纬度位置。最初的纬度是 -1 到 +1 之间的标准化值，对应于左右车道边界的纬度。
+                    </div>
+                </div>
+                <div class="button is-small is-static is-pulled-left" style="background: transparent; border: none;">
+                    <span class="icon is-medium has-text-grey-lighter">
+                        <i class="fas fa-lg fa-road"></i>
+                    </span>
+                </div>
+                <div class="field-body" style="padding-left: 8px;">
+                    <div class="field">
+                        <div class="control">
+                            <span id="editor-load" class="button is-small is-info" title="Load Scenario">
+                                <span class="icon is-medium">
+                                    <i class="fas fa-lg fa-folder-open"></i>
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="control">
+                            <span id="editor-save" class="button is-small is-success" title="Save Scenario">
+                                <span class="icon is-medium">
+                                    <i class="fas fa-lg fa-save"></i>
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="control">
+                            <span id="editor-share" class="button is-small is-warning" title="Share Scenario">
+                                <span class="icon is-medium">
+                                    <i class="fas fa-lg fa-link"></i>
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="field"></div>
+                    <div class="field">
+                        <div class="control">
+                            <span id="editor-finalize" class="button is-small is-link">
+                                <span class="icon">
+                                    <i class="fas fa-play"></i>
+                                </span>
+                                <span>运行</span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="field"></div>
+                    <div class="field has-addons">
+                        <div class="control">
+                            <span id="editor-path" class="button is-small is-dark is-outlined is-inverted">道路</span>
+                        </div>
+                        <div class="control">
+                            <span id="editor-obstacles" class="button is-small is-dark is-outlined is-inverted">静态障碍物</span>
+                        </div>
+                        <div class="control">
+                            <span id="editor-dynamic-obstacles" class="button is-small is-dark is-outlined is-inverted">动态障碍物</span>
+                        </div>
+                    </div>
+                    <div class="field" style="position: relative;">
+                        <div class="control">
+                            <span id="editor-clear" class="button is-small is-danger">清除&hellip;</span>
+                            <div id="editor-clear-options" class="gui-box is-hidden">
+                                <div class="buttons">
+                                    <span id="editor-clear-all" class="button is-small is-danger">所有</span>
+                                    <span id="editor-clear-dynamic-obstacles" class="button is-small is-warning">动态障碍物</span>
+                                    <span id="editor-clear-obstacles" class="button is-small is-warning">静态障碍物</span>
+                                    <span id="editor-clear-path" class="button is-small is-warning">道路</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="autocmd">
+                <div id = "mancmd" class="gui-box sim-mode-box">
+                    <p style="text-align:center;color: #ffffff;">发动机</p>
+                    <button id="engine" style="margin: 13px 16px; height: 80px; width: 80px; border-radius: 40px; background-color: rgb(26, 116, 250);" class="item" onclick="enginectl()">启动</button>
+                    <!-- <button id = "run_b" class="button is-small is-dark is-outlined is-inverted" style="display:flex;margin: 10px;" onclick="runcmd()">保持行驶</button>
+                    <button id = "stop_b" class="button is-small is-dark is-outlined is-inverted" style="display:flex;margin: 10px;"  onclick="stopcmd()">停止行驶</button>
+
+                    <button id = "go_left_b" class="button is-small is-dark is-outlined is-inverted" style="display:flex;margin: 10px;" onclick="go_leftcmd()">向左换道</button>
+                    <button id = "go_right_b" class="button is-small is-dark is-outlined is-inverted" style="display:flex;margin: 10px;" onclick="go_rightcmd()">向右换道</button>
+                
+                    <button id = "stop_crash_b" class="button is-small is-dark is-outlined is-inverted" style="display:flex;margin: 10px;" onclick="stop_crashcmd()">紧急停车</button>
+                    <button id = "stop_side_b" class="button is-small is-dark is-outlined is-inverted" style="display:flex;margin: 10px;" onclick="stop_sidecmd()">靠边停车</button> -->
+                </div>
+                <div id = "mancmd" class="gui-box sim-mode-box">
+                    <p style="text-align:center;color: #ffffff;">模式切换</p>
+                    <button id="mode" style="margin: 13px 16px; height: 80px; width: 80px; border-radius: 40px; background-color: rgb(26, 116, 250);" class="item" onclick="modesel()">人工</button>
+                    <!-- <button id = "run_b" class="button is-small is-dark is-outlined is-inverted" style="display:flex;margin: 10px;" onclick="runcmd()">保持行驶</button>
+                    <button id = "stop_b" class="button is-small is-dark is-outlined is-inverted" style="display:flex;margin: 10px;"  onclick="stopcmd()">停止行驶</button>
+
+                    <button id = "go_left_b" class="button is-small is-dark is-outlined is-inverted" style="display:flex;margin: 10px;" onclick="go_leftcmd()">向左换道</button>
+                    <button id = "go_right_b" class="button is-small is-dark is-outlined is-inverted" style="display:flex;margin: 10px;" onclick="go_rightcmd()">向右换道</button>
+                
+                    <button id = "stop_crash_b" class="button is-small is-dark is-outlined is-inverted" style="display:flex;margin: 10px;" onclick="stop_crashcmd()">紧急停车</button>
+                    <button id = "stop_side_b" class="button is-small is-dark is-outlined is-inverted" style="display:flex;margin: 10px;" onclick="stop_sidecmd()">靠边停车</button> -->
+                </div>
+            </div>
+            
+            <div id="zone_joystick_right"></div>
+            <div id="zone_joystick_left"></div>
+            <div id = "pointcloud" style="display: none;">
+
+            </div>
+            <div id = "camera" style="display: none;">
+                <img id = "camimg" height="300" width="300" src="">
+            </div>
+            <div class="gui-box sim-mode-box is-hidden" style="position: absolute;top:0;right:14%;">
+                <div class="buttons has-addons" >
+                    <span id="mode-manual" onclick="manual()" style="height: 60px;width: 100px;" class="button is-small is-dark is-outlined is-inverted">人工控制</span>
+                    <span id="mode-autonomous" onclick="autonomous()" style="height: 60px;width: 100px;" class="button is-small is-dark is-outlined is-inverted">自动驾驶</span>
+                </div>
+            </div>
+            <div class="sim-mode-box" style="position: absolute;bottom:10%;right:2%;">
+                <!-- <div class="buttons has-addons" >
+                    <span id="mode-manual" onclick="manual()" style="height: 60px;width: 100px;" class="button is-small is-dark is-outlined is-inverted">人工控制</span>
+                    <span id="mode-autonomous" onclick="autonomous()" style="height: 60px;width: 100px;" class="button is-small is-dark is-outlined is-inverted">自动驾驶</span>
+                </div> -->
+        
+                <table>
+                    <tr>
+                        <td><span id="warn-light" onclick="warnlight()" style="background-color: red; margin-right: 2%;margin-top:20%; height: 50px;width: 50px;border-radius: 8px;right: 4px;bottom: 4px;" class="lightButton button is-dark is-outlined is-inverted">警示灯</span></td>
+                        <td><span id="top-light" onclick="toplight()" style="background-color: #ffffff; margin-right: 2%;margin-top:20%; height: 50px;width: 50px;border-radius: 8px; bottom: 4px;" class="lightButton button is-dark is-outlined is-inverted"><img width="100%" style="object-fit: cover;transform: rotate(90deg);" src="./images/Light-hb-off.png" /></span></td>
+                        <td><span id="shi-light" onclick="shilight()" style="background-color: rgb(0, 157, 255); margin-right: 2%;margin-top:20%; height: 50px;width: 50px;border-radius: 8px;left: 4px;bottom: 4px;" class="lightButton button is-dark is-outlined is-inverted">示廓灯</span></td>
+                    </tr>
+                    <tr>
+                        <td><span id="left-light" onclick="leftlight()" style="background-color: #ffffff; margin-right: 2%;margin-top:20%; height: 50px;width: 50px;border-radius: 8px;right: 4px;" class="lightButton button is-dark is-outlined is-inverted"><img width="100%" style="object-fit: cover;" src="./images/Light-lr-off.png" /></span></td>
+                        <td><span id="speaker" onclick="speaker()" style="background-color: #ffffff; margin-right: 2%;margin-top:20%; height: 50px;width: 50px;border-radius: 8px;" class="lightButton button is-dark is-outlined is-inverted"><img width="100%" style="object-fit: cover;" src="./images/Speaker.png" /></span></td>
+                        <td><span id="right-light" onclick="rightlight()" style="background-color: #ffffff; margin-right: 2%;margin-top:20%; height: 50px;width: 50px;border-radius: 8px;left: 4px;" class="lightButton button is-dark is-outlined is-inverted"><img width="100%" style="object-fit: cover;transform: scaleX(-1);" src="./images/Light-lr-off.png" /></span></td>
+                    </tr>
+                    <tr>
+                        <td><span id="null-light" onclick="rightlight()" style="background-color: #ffffff; margin-right: 2%;margin-top:20%; height: 50px;width: 50px;border-radius: 8px;" class="lightButton button is-dark is-outlined is-inverted is-hidden"><img width="100%" style="object-fit: cover;transform: scaleX(-1);" src="./images/Light-lr-off.png" /></span></td>
+                        <td><span id="bottom-light" onclick="bottomlight()" style="background-color: #ffffff; margin-right: 2%;margin-top:20%; height: 50px;width: 50px;border-radius: 8px;bottom: 4px;" class="lightButton button is-dark is-outlined is-inverted"><img width="100%" style="object-fit: cover;transform: rotate(-90deg);" src="./images/Light-hb-off.png" /></span></td>
+                    </tr>
+                </table>
+           
+            </div>
+
+            <!-- <div class="gui-box sim-mode-box" style="position: absolute;top:0%;right:15%;">
+                <div class="buttons has-addons" >
+                    <span id="stop" onclick="stopcar()" style="height: 60px;width: 100px;" class="button is-small is-dark is-outlined is-inverted">急停</span>
+                </div>
+            </div> -->
+            <div class="gui-box sim-mode-box" style="position: absolute;width: 148px;height: 181px;bottom:8%;right:15%;">
+                <table>
+                    <tr>
+                        <td>
+                            <span id="front-move-bucket" onclick="frontmovebucket()" style="background-color: transparent; margin-right: 2%;margin-top:20%; height: 55px;width: 50px;border-radius: 8px; bottom: 3px;right: -2px;" class="button is-dark is-outlined "><img width="100%" style="object-fit: cover;transform: rotate(-90deg);" src="./images/arrow.png" /></span>
+                        </td>
+                        <td>
+                            <span id="front-move-arm" onclick="frontmovearm()" style="background-color: transparent; margin-right: 2%;margin-top:20%; height: 55px;width: 50px;border-radius: 8px; bottom: 8px;left:32px;" class="button is-dark is-outlined"><img width="100%" style="object-fit: cover;transform: rotate(-90deg);" src="./images/arrow.png" /></span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <!-- <img width="100%" style="height: 20px;width: 20px;" src="./images/bucket.png" /> -->
+                            <p style="text-align:center;color: #ffffff;margin-right: -2px;">铲斗</p>
+                        </td>
+                        <td>
+                            <!-- <img width="100%" style="height: 20px;width: 20px;" src="./images/arm.png" /> -->
+                            <p style="text-align:center;color: #ffffff;margin-left: 40px;">动臂</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span id="back-move-arm" onclick="backmovebucket()" style="background-color: transparent; margin-right: 2%;margin-top:20%; height: 55px;width: 50px;border-radius: 8px;top:8px; right: -2px;" class="button is-dark is-outlined "><img width="100%" style="object-fit: cover;transform: rotate(90deg);" src="./images/arrow.png" /></span>
+                        </td>
+                        <td>
+                            <span id="back-move-arm" onclick="backmovearm()" style="background-color: transparent; margin-right: 2%;margin-top:20%; height: 55px;width: 50px;border-radius: 8px;top:4px; left: 32px;" class="button is-dark is-outlined "><img width="100%" style="object-fit: cover;transform: rotate(90deg);" src="./images/arrow.png" /></span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="sim-mode-box" style="position: absolute;top:20%;right:1%;">
+                    <table>
+                    <tr colspan="2">
+                    <td>
+                        <div class="container-2">
+                            <p style="text-align:center;color: #ffffff;">挡位设定:</p>
+                            <button id = "set0" style="margin-top: 13px;margin-bottom: 13px;margin-right: 16px;margin-left: 16px;height: 40px;width: 40px;border-radius: 20px;" class="item"  onclick="setvel0()">0</button>
+                            <button id = "set5" style="margin-top: 13px;margin-bottom: 13px;margin-right: 16px;margin-left: 16px;height: 40px;width: 40px;border-radius: 20px;" class="item"  onclick="setvel5()">5</button>
+                            <button id = "set10" style="margin-top: 13px;margin-bottom: 13px;margin-right: 16px;margin-left: 16px;height: 40px;width: 40px;border-radius: 20px;" class="item"  onclick="setvel10()">10</button>
+                            <button id = "set15" style="margin-top: 13px;margin-bottom: 13px;margin-right: 16px;margin-left: 16px;height: 40px;width: 40px;border-radius: 20px;" class="item"  onclick="setvel15()">15</button>
+                        </div>
+                    </td>
+                    
+                    <td>
+                    <div class="container" >
+                        <p style="text-align:center;color: #ffffff;">速度设定:</p>
+                        <input type="text"  style="margin-top: 12px;margin-right: 14px;margin-left: 14px;" class="player-num item" id="player" value="5" max="15" min="0" onblur="on_change()">
+                        <p style="text-align:center;color: #ffffff;">km/h</p>
+                        <button style="margin-top: 9px;margin-bottom: 20px;margin-right: 20px;margin-left: 20px;" class="btn-add item" id="btnAdd" onclick="plus()"></button>
+                        <input   type="range" id="slider"  style="height:70px; margin-right: -16px;margin-left: -16px;transform: rotate(-90deg);" min="0" max="15" step="1" onchange="moveChange()" >
+                        <!-- <input   type="range" id="slider"  style="transform: rotate(-90deg);" min="0" max="15" step="1" onchange="moveChange()" > -->
+                        <button style="margin-top: 20px;margin-bottom: 6px;margin-right: 20px;margin-left: 20px;" class="btn-sub item" id="btnSub" onclick="less()"></button>
+                        </div>
+                </td>
+                </tr>
+            </table>
+                    <!-- </div> -->
+                <!-- </div> -->
+            </div>
+
+            <div id="cameras" class="gui-box sim-mode-box">
+            
+                <div class="button is-small is-static is-pulled-left" style="background: transparent; border: none;">
+                    <span class="icon is-medium has-text-grey-lighter">
+                        <i class="fas fa-lg fa-eye"></i>
+                    </span>
+                </div>
+                <div class="button is-small is-static has-text-grey-light has-text-right is-paddingless is-pulled-right" style="margin-left: 8px; width: 50px; background: transparent; border: none;">
+                    <span id="fps">&mdash;</span> fps
+                </div>
+                <div class="field is-grouped" style="padding-left: 8px;">
+                    <div class="control">
+                        <div class="buttons has-addons" style="margin-bottom: 0;">
+                            <span id="camera-chase" class="button is-small is-dark is-outlined is-inverted" style="margin-bottom: 0;">背后</span>
+                            <span id="camera-topDown" class="button is-small is-dark is-outlined is-inverted" style="margin-bottom: 0;">顶部</span>
+                            <span id="camera-free" class="button is-small is-dark is-outlined is-inverted" style="margin-bottom: 0;">自由</span>
+                        </div>
+                    </div>
+                    <div class="control">
+                        <div class="buttons has-addons" style="margin-bottom: 0;">
+                            <span id="camera-2D" class="button is-small is-dark is-outlined is-inverted" style="margin-bottom: 0;">2D</span>
+                            <span id="camera-3D" class="button is-small is-dark is-outlined is-inverted" style="margin-bottom: 0;">3D</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="welcome-modal" class="modal">
+            <div id="welcome-modal-background" class="modal-background" style="background-color: transparent;"></div>
+            <div class="modal-content content">
+                <div class="modal-box has-text-grey-lighter">
+                    <div class="hero is-dark is-bold" style="position: relative;">
+                        <button id="welcome-modal-close" class="delete is-medium" style="position: absolute; top: 0.5rem; right: 0.5rem;"></button>
+                        <div class="hero-body" style="padding: 1.5rem;">
+                            <div class="title is-4" style="display: flex; justify-content: center;align-items: center;">自动驾驶机器人控制平台</div>
+                            <!--<div class="subtitle is-6">Built with WebGL and Three.js</div>-->
+                        </div>
+                    </div>
+            <div style="display: flex; justify-content: center;align-items: center;">
+                <form action="#" class="login-form" >
+                    <input type="text" id= "ip" name="robotip" placeholder="robot ip" value="192.168.83.136"/></br>
+                    <input type="text" id="user" name="username" placeholder="user" value = "admin"/></br>
+                    <input type="password" id="password" name="password" placeholder="password" value = "admin"/></br>
+                    <h4 id = "message"></h4>
+                    <button onclick="init()" type="button" id = "connect" class="primary-btn">登录</button>
+                </form>
+            </div>
+                    <p>
+                        <div style="display: flex; justify-content: center;align-items: center;">
+                        提示：
+                        <a id="welcome-modal-examples">加载轨迹</a>
+                        或 <a id="welcome-modal-create">创建轨迹</a>.
+                    </div>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div id="scenarios-modal" class="modal">
+            <div id="scenarios-modal-background" class="modal-background" style="background-color: transparent;"></div>
+            <div class="modal-content">
+                <div class="modal-box has-text-grey-lighter">
+                    <button id="scenarios-modal-close" class="delete is-medium is-pulled-right"></button>
+                    <div class="title is-5 has-text-grey-lighter">加载轨迹</div>
+                    <div id="scenarios-modal-tabs" class="tabs is-small is-toggle">
+                        <ul>
+                            <li id="scenarios-modal-examples-tab-button"><a>样例轨迹</a></li>
+                            <li id="scenarios-modal-saved-tab-button"><a>历史轨迹</a></li>
+                            <li id="scenarios-modal-import-tab-button"><a>导入轨迹</a></li>
+                        </ul>
+                    </div>
+                    <div id="scenarios-modal-examples-tab" class="scenarios-modal-tab is-hidden has-text-weight-bold has-text-grey-lighter">
+                        <div style="height: calc(100% + 0.75rem);">
+                            <div class="columns">
+                                <div id="example-0" class="column">
+                                    <img src="images/examples/one_car_overtake.png" />
+                                    <div class="name">One-car overtake</div>
+                                </div>
+                                <div id="example-1" class="column">
+                                    <img src="images/examples/two_car_overtake.png" />
+                                    <div class="name">Two-car overtake</div>
+                                </div>
+                            </div>
+                            <div class="columns">
+                                <div id="example-2" class="column">
+                                    <img src="images/examples/rough_road.png" />
+                                    <div class="name">Rough road</div>
+                                </div>
+                                <div id="example-3" class="column">
+                                    <img src="images/examples/dodging_a_speeder.png" />
+                                    <div class="name">Dodging a speeder</div>
+                                </div>
+                            </div>
+                            <div class="columns">
+                                <div id="example-4" class="column">
+                                    <img src="images/examples/lane_blockage.png" />
+                                    <div class="name">Lane blockage with oncoming traffic</div>
+                                </div>
+                                <div id="example-5" class="column">
+                                    <img src="images/examples/merging.png" />
+                                    <div class="name">Merging into slower traffic</div>
+                                </div>
+                            </div>
+                            <div class="columns">
+                                <div id="example-6" class="column">
+                                    <img src="images/examples/crosswalks.png" />
+                                    <div class="name">Negotiating crosswalks</div>
+                                </div>
+                                <div id="example-7" class="column">
+                                    <img src="images/examples/peloton.png" />
+                                    <div class="name">Chasing the peloton</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="scenarios-modal-saved-tab" class="scenarios-modal-tab is-hidden">
+                        <div class="columns">
+                            <div id="scenarios-sort-name" class="column is-7 is-size-7 scenario-sort-button">Name</div>
+                            <div id="scenarios-sort-saved-at" class="column is-4 is-size-7 scenario-sort-button is-underlined">Saved Date</div>
+                            <div class="column is-1"></div>
+                        </div>
+                        <div id="scenarios-modal-items"></div>
+                    </div>
+                    <div id="scenarios-modal-import-tab" class="scenarios-modal-tab is-hidden">
+                        <div class="field" style="flex: 1; display: flex; flex-direction: column;">
+                            <div class="control" style="flex: 1; display: flex; flex-direction: column;">
+                                <textarea id="scenario-import-box" class="textarea" type="text" placeholder="Paste exported scenario code here" style="flex: 1; resize: none; border-width: 2px;"></textarea>
+                            </div>
+                            <div id="scenario-import-info" class="is-size-7 is-hidden" style="margin-top: 1.5rem;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="scenario-share-modal" class="modal">
+            <div id="scenario-share-modal-background" class="modal-background" style="background-color: transparent;"></div>
+            <div class="modal-content">
+                <div class="modal-box has-text-grey-lighter">
+                    <button id="scenario-share-modal-close" class="delete is-medium is-pulled-right"></button>
+                    <div class="title is-5 has-text-grey-lighter">Share Scenario</div>
+                    <div>This link will automatically run the scenario when loaded:</div>
+                    <div class="field has-addons">
+                        <div class="control has-icons-left is-expanded">
+                            <input id="scenario-share-link" class="input" type="text" readonly value="http://google.com" />
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-link"></i>
+                            </span>
+                        </div>
+                        <div class="control">
+                            <div id="scenario-share-clipboard" class="button">
+                                <div>
+                                    <span id="scenario-share-clipboard-icon" class="icon is-small">
+                                        <i class="fas fa-clipboard"></i>
+                                    </span>
+                                </div>
+                                <div>
+                                    <span id="scenario-share-clipboard-success-icon" class="icon is-small is-hidden">
+                                        <i class="fas fa-clipboard-check"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        This code can be imported using the Load menu:
+                    </div>
+                    <div class="field">
+                        <div class="control">
+                            <textarea id="scenario-share-box" class="textarea" type="text" readonly style="height: calc(40vh); resize: none;"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script type="text/javascript" type="text/javascript">
+
+            //变量初始化
+                var camerastate = "on";
+                var cloudpoint = "off";
+                var posepoint = "off";
+                var prevPose = { x: 0, y: 0, z: 0 };
+                var totalDistance = 0;
+                var stopflag = "off";
+                var setvel = "-1";
+                var wranLightState = "off";
+                var topLightState = "off";
+                var shiLightState = "off";
+                var leftLightState = "off";
+                var rightLightState = "off";
+                var bottomLightState= "off";
+                var engineState = "off";
+                var curMode = "人工";
+                var armState = "off";
+                var bucketState = "off";
+
+            
+            //初始化话题
+                var camera_topic = "/camera_1/color/image_raw";
+                var camera_ip = "127.0.0.1:8080";
+                var speed_topic = "/cmd_vel_topic";
+                var acc_odom_topic = "";
+                var lat_topic = "";
+                var lon_topic = "";
+                var height_topic = "";
+                var frontvel_topic = "";
+                var leftvel_topic = "";
+                var rightvel_topic = "";
+                var enginespeed_sub_topic = "/enginespeed_sub_topic";
+                var enginespeed_topic = "/enginespeed_topic";
+
+                var mode_topic = "/control_mode";
+                var pose_topic = "/imus/data_raw";
+                var pointcloud_topic ="/velodyne_points";// "/camera_1/depth/points"; "velodyne_points"
+                var autocmd_topic = "/auto_cmd";
+                var velcmd_topic = "/ackermann_steering_controller/cmd_vel";
+                var lightctl_topic = "/light_cmd";
+                var speaker_topic = "/speaker_cmd";
+                var arm_topic = "/arm_cmd";
+                var bucket_topic = "/buckect_cmd";
+                var stop_topic = "/stop";
+                var engine_topic = "/engine";
+                var speedmode_topic = "/speed_mode";
+                var speedlimit_topic = "/speed_limit";
+
+                
+            //初始化话题
+    
+             //连接ROS
+                var ros = new ROSLIB.Ros({
+                url : ''
+                });
+    
+            //线速度角速度话题订阅
+            var speedsub = new ROSLIB.Topic({
+                ros:ros,
+                name:speed_topic,
+                messageType:'geometry_msgs/Twist'
+            });
+    
+            //姿态数据订阅
+            var posesub = new ROSLIB.Topic({
+                ros:ros,
+                name:pose_topic,
+                messageType:'sensor_msgs/Imu'
+            });
+            //左轮速度
+            var leftspeedsub = new ROSLIB.Topic({
+                ros:ros,
+                name:leftvel_topic,
+                messageType:'std_msgs/Int32'
+            });
+            //右轮速度
+            var rightspeedsub = new ROSLIB.Topic({
+                ros:ros,
+                name:rightvel_topic,
+                messageType:'std_msgs/Int32'
+            });
+
+            var enginespeedsub = new ROSLIB.Topic({
+                ros:ros,
+                name:enginespeed_sub_topic,
+                messageType:'std_msgs/Int32'
+            });
+
+            //lat
+            var latsub = new ROSLIB.Topic({
+                ros:ros,
+                name:lat_topic,
+                messageType:'std_msgs/Float32'
+            });
+
+            //lon
+            var lonsub = new ROSLIB.Topic({
+                ros:ros,
+                name:lat_topic,
+                messageType:'std_msgs/Float32'
+            });
+
+            //high
+            var heightsub = new ROSLIB.Topic({
+                ros:ros,
+                name:height_topic,
+                messageType:'std_msgs/Float32'
+            });
+
+            //gnss  novatel_oem7_msgs/GNSS
+            // var gnsssub = new ROSLIB.Topic({
+            //     ros:ros,
+            //     name:"/novatel/oem7/gnss",
+            //     messageType:'novatel_oem7_msgs/GNSS'
+            // });
+
+            //累计里程订阅
+            var accodomsub = new ROSLIB.Topic({
+                ros:ros,
+                name:acc_odom_topic,
+                messageType:'std_msgs/String'
+            });
+    
+            //模式切换指令
+            var modepub = new ROSLIB.Topic({
+                ros:ros,
+                name:mode_topic,
+                messageType:'std_msgs/String'
+            });
+
+            var auto = new ROSLIB.Message({
+                data:"auto"
+            });
+
+            var man = new ROSLIB.Message({
+                data:"man"
+            });
+    
+            //自动驾驶指令
+            var autocmdpub = new ROSLIB.Topic({
+                ros:ros,
+                name:autocmd_topic,
+                messageType:'std_msgs/String'
+            });
+    
+            var run = new ROSLIB.Message({
+                data:"run"
+            });
+    
+            var stop = new ROSLIB.Message({
+                data:"stop"
+            });
+    
+            var gorightroad = new ROSLIB.Message({
+                data:"gorightroad"
+            });
+    
+            var goleftroad = new ROSLIB.Message({
+                data:"goleftroad"
+            });
+    
+            var stopcrash = new ROSLIB.Message({
+                data:"stopcrash"
+            });
+    
+            var stopside = new ROSLIB.Message({
+                data:"stopside"
+            });
+    
+    
+            //执行器控制
+            var lightctlpub = new ROSLIB.Topic({
+                ros:ros,
+                name:lightctl_topic,
+                messageType:'std_msgs/String'
+            });
+    
+            var warnlighton = new ROSLIB.Message({
+                data:"warnlighton"
+            });
+    
+            var warnlightoff = new ROSLIB.Message({
+                data:"warnlightoff"
+            });
+
+            var shilighton = new ROSLIB.Message({
+                data:"shilighton"
+            });
+
+            var shilightoff = new ROSLIB.Message({
+                data:"shilightoff"
+            });
+
+            var frontlighton = new ROSLIB.Message({
+                data:"frontlighton"
+            });
+
+            var frontlightoff = new ROSLIB.Message({
+                data:"frontlightoff"
+            });
+
+            var leftlighton = new ROSLIB.Message({
+                data:"leftlighton"
+            });
+
+            var leftlightoff = new ROSLIB.Message({
+                data:"leftlightoff"
+            });
+
+            var rightlighton = new ROSLIB.Message({
+                data:"rightlighton"
+            });
+
+            var rightlightoff = new ROSLIB.Message({
+                data:"rightlightoff"
+            });
+
+            var backlighton = new ROSLIB.Message({
+                data:"backlighton"
+            });
+
+            var backlightoff = new ROSLIB.Message({
+                data:"backlightoff"
+            });
+
+            //喇叭控制
+            var speakerpub = new ROSLIB.Topic({
+                ros:ros,
+                name:speaker_topic,
+                messageType:'std_msgs/String'
+            });
+
+            var speakeron = new ROSLIB.Message({
+                data:"on"
+            });
+
+            var speakeroff = new ROSLIB.Message({
+                data:"off"
+            });
+
+            //动臂控制
+            var armpub = new ROSLIB.Topic({
+                ros:ros,
+                name:arm_topic,
+                messageType:'std_msgs/String'
+            });
+
+            var arm_up = new ROSLIB.Message({
+                data:"up"
+            });
+
+            var arm_down = new ROSLIB.Message({
+                data:"down"
+            });
+
+            var arm_stop = new ROSLIB.Message({
+                data:"none"
+            });
+
+            //铲斗控制
+
+            var bucketpub = new ROSLIB.Topic({
+                ros:ros,
+                name:bucket_topic,
+                messageType:'std_msgs/String'
+            });
+
+            var bucket_up = new ROSLIB.Message({
+                data:"up"
+            });
+
+            var bucket_down = new ROSLIB.Message({
+                data:"down"
+            });
+
+            var bucket_stop = new ROSLIB.Message({
+                data:"none"
+            });
+
+            //急停
+
+            var stoppub = new ROSLIB.Topic({
+                ros:ros,
+                name:stop_topic,
+                messageType:'std_msgs/String'
+            });
+
+            var car_stop = new ROSLIB.Message({
+                data:"pause"
+            });
+
+            var car_run = new ROSLIB.Message({
+                data:"run"
+            });
+
+            //发动机控制
+
+            var enginepub = new ROSLIB.Topic({
+                ros:ros,
+                name:engine_topic,
+                messageType:'std_msgs/String'
+            });
+
+            var engine_on = new ROSLIB.Message({
+                data:"on"
+            });
+
+            var engine_off = new ROSLIB.Message({
+                data:"off"
+            });
+
+            //速度模式
+
+            var speedmodepub = new ROSLIB.Topic({
+                ros:ros,
+                name:speedmode_topic,
+                messageType:'std_msgs/String'
+            });
+
+            var highmode = new ROSLIB.Message({
+                data:"high"
+            });
+
+            var lowmode = new ROSLIB.Message({
+                data:"low"
+            });
+
+            //指定速度
+            var speedlimitpub = new ROSLIB.Topic({
+                ros:ros,
+                name:speedlimit_topic,
+                messageType:'std_msgs/Int32'
+            });
+    
+            //运动控制
+            var cmdvelpub = new ROSLIB.Topic({
+                ros : ros,
+                name : velcmd_topic,
+                messageType : 'geometry_msgs/Twist'
+             });
+    
+             move = function (linear, angular) {
+            var twist = new ROSLIB.Message({
+            linear: {
+              x: linear,
+              y: 0,
+              z: 0
+            },
+            angular: {
+              x: 0,
+              y: 0,
+              z: angular
+            }
+          });
+          cmdvelpub.publish(twist);
+        }
+        
+        createJoystickleft = function () {
+              var options = {
+                zone: document.getElementById('zone_joystick_left'),
+                threshold: 0.8,
+                position: { left: 80 + '%' },
+                mode: 'static',
+                size: 150,
+                color: '#ffffff',
+              };
+              manager = nipplejs.create(options);
+        
+              linear_speed = 0;
+              angular_speed = 0;
+        
+              self.manager.on('start', function (event, nipple) {
+                console.log("Movement start");
+              });
+        
+              self.manager.on('move', function (event, nipple) {
+                console.log("Moving");
+              });
+        
+              self.manager.on('end', function () {
+                console.log("Movement end");
+              });
+              manager.on('start', function (event, nipple) {
+                timer = setInterval(function () {
+                  move(linear_speed, angular_speed);
+                }, 25);
+              });
+              manager.on('end', function () {
+                if (timer) {
+                  clearInterval(timer);
+                }
+                self.move(0, 0);
+              });
+              manager.on('move', function (event, nipple) {
+                max_linear = 0.4; // m/s
+                max_angular = 1.5; // rad/s
+                max_distance = 90//75.0; // pixels;
+                linear_speed = Math.sin(nipple.angle.radian) * max_linear * nipple.distance/max_distance;
+                angular_speed = -Math.cos(nipple.angle.radian) * max_angular * nipple.distance/max_distance;
+              });
+            }
+    
+        createJoystickright = function () {
+            var options = {
+            zone: document.getElementById('zone_joystick_right'),
+            threshold: 0.1,
+            position: { left: 80 + '%' },
+            mode: 'static',
+            size: 150,
+            color: '#329ba8',
+            };
+            manager = nipplejs.create(options);
+    
+            linear_speed = 0;
+            angular_speed = 0;
+    
+            self.manager.on('start', function (event, nipple) {
+            console.log("Movement start");
+            });
+    
+            self.manager.on('move', function (event, nipple) {
+            console.log("Moving");
+            });
+    
+            self.manager.on('end', function () {
+            console.log("Movement end");
+            });
+            manager.on('start', function (event, nipple) {
+            timer = setInterval(function () {
+                move(linear_speed, angular_speed);
+            }, 25);
+            });
+            manager.on('end', function () {
+            if (timer) {
+                clearInterval(timer);
+            }
+            self.move(0, 0);
+            });
+            manager.on('move', function (event, nipple) {
+            max_linear = 0.4; // m/s
+            max_angular = 1.5; // rad/s
+            max_distance = 90//75.0; // pixels;
+            linear_speed = Math.sin(nipple.angle.radian) * max_linear * nipple.distance/max_distance;
+            angular_speed = -Math.cos(nipple.angle.radian) * max_angular * nipple.distance/max_distance;
+            });
+        }
+            
+    
+            //登陆初始化
+                function init()
+                {
+                    //连接ROS
+                    let ip = document.getElementById("ip").value;
+                    console.log(ip);
+                    url_ = 'ws://'+ip+":9090";
+                    ros = new ROSLIB.Ros({
+                    url : url_
+                     });
+                    
+                     //姿态数据订阅
+                     posesub = new ROSLIB.Topic({
+                        ros:ros,
+                        name:pose_topic,
+                        messageType:'sensor_msgs/Imu'
+                    });
+    
+                    //线速度角速度话题订阅
+                     speedsub = new ROSLIB.Topic({
+                         ros:ros,
+                         name:speed_topic,
+                        messageType:'geometry_msgs/Twist'
+                     });
+    
+                     accodomsub = new ROSLIB.Topic({
+                        ros:ros,
+                        name:acc_odom_topic,
+                        messageType:'std_msgs/String'
+                     });
+    
+                     modepub = new ROSLIB.Topic({
+                        ros:ros,
+                        name:mode_topic,
+                        messageType:'std_msgs/String'
+                    });
+    
+                    autocmdpub = new ROSLIB.Topic({
+                        ros:ros,
+                        name:autocmd_topic,
+                        messageType:'std_msgs/String'
+                    });
+    
+                    lightctlpub = new ROSLIB.Topic({
+                        ros:ros,
+                        name:lightctl_topic,
+                        messageType:'std_msgs/String'
+                    });
+
+                    speakerpub = new ROSLIB.Topic({
+                        ros:ros,
+                        name:speaker_topic,
+                        messageType:'std_msgs/String'
+                    });
+
+                    armpub = new ROSLIB.Topic({
+                        ros:ros,
+                        name:arm_topic,
+                        messageType:'std_msgs/String'
+                    });
+
+                    bucketpub = new ROSLIB.Topic({
+                        ros:ros,
+                        name:bucket_topic,
+                        messageType:'std_msgs/String'
+                    });
+
+                    stoppub = new ROSLIB.Topic({
+                        ros:ros,
+                        name:stop_topic,
+                        messageType:'std_msgs/String'
+                    });
+
+                    enginepub = new ROSLIB.Topic({
+                        ros:ros,
+                        name:engine_topic,
+                        messageType:'std_msgs/String'
+                    });
+
+                    speedmodepub = new ROSLIB.Topic({
+                        ros:ros,
+                        name:speedmode_topic,
+                        messageType:'std_msgs/String'
+                    });
+
+                    speedlimitpub = new ROSLIB.Topic({
+                        ros:ros,
+                        name:speedlimit_topic,
+                        messageType:'std_msgs/Int32'
+                    });
+
+                    //左轮速度
+                    leftspeedsub = new ROSLIB.Topic({
+                        ros:ros,
+                        name:leftvel_topic,
+                        messageType:'std_msgs/Int32'
+                    });
+                    //右轮速度
+                    rightspeedsub = new ROSLIB.Topic({
+                        ros:ros,
+                        name:rightvel_topic,
+                        messageType:'std_msgs/Int32'
+                    });
+
+                    enginespeedsub = new ROSLIB.Topic({
+                        ros:ros,
+                        name:enginespeed_sub_topic,
+                        messageType:'std_msgs/Int32'
+                    });
+
+                    //lat
+                    latsub = new ROSLIB.Topic({
+                        ros:ros,
+                        name:lat_topic,
+                        messageType:'std_msgs/Float32'
+                    });
+
+                    //lon
+                    lonsub = new ROSLIB.Topic({
+                        ros:ros,
+                        name:lat_topic,
+                        messageType:'std_msgs/Float32'
+                    });
+
+                    // gnsssub = new ROSLIB.Topic({
+                    //     ros:ros,
+                    //     name:"/novatel/oem7/gnss",
+                    //     messageType:'novatel_oem7_msgs/GNSS'
+                    // });
+
+                    //height
+                    heightsub = new ROSLIB.Topic({
+                        ros:ros,
+                        name:height_topic,
+                        messageType:'std_msgs/Float32'
+                    });
+
+    
+                   var  viewer = new ROS3D.Viewer({
+                        divID : 'pointcloud',
+                        width : 1300,
+                        height : 800,
+                        antialias : true,
+                        cameraZoomSpeed : 3,
+                        far:2000,
+                        displayPanAndZoomFrame:true
+                        // axis: true,
+                        // grid: true
+                        // cameraPose: {              // 可选：相机的初始位置和方向
+                        //     position: new THREE.Vector3(10, 10, 10), // 相机位置
+                        //     //lookAt: new THREE.Vector3(0, 0, 0)       // 相机朝向位置
+                        // }
+                        });
+
+                        //viewer.init();
+
+                    // // 配置相机的位置和视角
+                    // var camera = viewer.camera;
+                    // camera.position.set(10, -10, 10); // 设置初始位置 (x, y, z)
+                    // camera.lookAt(new THREE.Vector3(0, 0, 0)); // 看向原点 (0, 0, 0)
+
+                    // // 添加一个轨迹控制器来调整视角（可选）
+                    // var controls = new THREE.OrbitControls(camera, viewer.renderer.domElement);
+                    // controls.enableDamping = true;  // 启用阻尼效果
+                    // controls.dampingFactor = 0.25;
+                    // controls.screenSpacePanning = false;
+
+                    // // 设置默认的光源
+                    // var light = new THREE.AmbientLight(0xFFFFFF); // 环境光
+                    // viewer.scene.add(light);
+
+                    var robotModel = new ROS3D.UrdfClient({
+                        ros : ros,
+                        tfClient : new ROSLIB.TFClient({
+                            ros : ros,
+                            fixedFrame : 'base_link', // 坐标系为 map
+                            angularThres : 0.01,
+                            transThres : 0.01
+                        }),
+                        // tfClient:tfClient,
+                        path : './models/',
+                        rootObject : viewer.scene
+                    });
+    
+                    var tfClient = new ROSLIB.TFClient({
+                    ros : ros,
+                    angularThres : 0.01,
+                    transThres : 0.01,
+                    rate : 10.0,
+                    fixedFrame : '/camera_link'
+                    });
+    
+                    var cloudClient = new ROS3D.PointCloud2({
+                    ros: ros,
+                    tfClient: tfClient,
+                    rootObject: viewer.scene,
+                    topic:pointcloud_topic ,
+                    material: { size: 0.05, color: 0xff00ff },
+                    max_pts:5000000,
+                    
+                    //colorsrc:'rgb'
+                    });
+    
+                    //运动控制
+                    cmdvelpub = new ROSLIB.Topic({
+                    ros : ros,
+                    name : velcmd_topic,
+                    messageType : 'geometry_msgs/Twist'
+                    });
+    
+                    //视频接口初始化  http://127.0.0.1:8080/stream?topic=/camera_1/color/image_raw
+                    let camera_src =  "http://"+ip+":8080/stream?topic="+camera_topic;
+                    document.getElementById("camimg").src=camera_src;
+      
+                    //线速度角速度订阅初始化
+                    speedsub.subscribe(function(message) {
+                        // var currentPose = message.pose.pose.position;
+    
+                        // // 计算位移
+                        // var dx = currentPose.x - prevPose.x;
+                        // var dy = currentPose.y - prevPose.y;
+                        // var dz = currentPose.z - prevPose.z;
+                        // var distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
+    
+                        // // 累加位移
+                        // totalDistance += distance;
+    
+                        // // 更新上一次位置
+                        // prevPose = currentPose;
+    
+                        // //console.log('Total distance: ' + totalDistance);
+                        // document.getElementById("speed").innerHTML = (message.twist.twist.linear.x.toFixed(2));
+                        // document.getElementById("station").innerHTML = (message.twist.twist.angular.z.toFixed(2));
+                        // document.getElementById("latitude").innerHTML = (totalDistance.toFixed(2));
+                        document.getElementById("speed").innerHTML = (message.linear.x.toFixed(2)*3.6);
+
+                    });
+                    //姿态数据订阅初始化
+                    posesub.subscribe(function(message) {
+                        let eulerAngles = quaternionToEuler(message.orientation.x, message.orientation.y,message.orientation.z, message.orientation.w);
+                        //document.getElementById("speed").innerHTML = (message.angular_velocity.x.toFixed(2));
+                        //document.getElementById("station").innerHTML = (message.angular_velocity.z.toFixed(2));
+                        document.getElementById("roll").innerHTML = (eulerAngles.roll.toFixed(2));
+                        document.getElementById("pitch").innerHTML = (eulerAngles.pitch.toFixed(2));
+                        document.getElementById("plan-time").innerHTML = (eulerAngles.yaw.toFixed(2));
+                    });
+
+                    leftspeedsub.subscribe(function(message){
+                        //document.getElementById("leftspeed").innerHTML = 
+                    });
+
+                    leftspeedsub.subscribe(function(message){
+                        //document.getElementById("rightspeed").innerHTML = 
+                    });
+
+                    enginespeedsub.subscribe(function(message){
+                        //document.getElementById("enginespeed").innerHTML = 
+                    });
+
+                    accodomsub.subscribe(function(message){
+                        //document.getElementById("accodom").innerHTML = 
+                    });
+
+                    latsub.subscribe(function(message){
+                        //document.getElementById("lat").innerHTML = 
+                    });
+
+                    lonsub.subscribe(function(message){
+                        //document.getElementById("lon").innerHTML = 
+                    });
+
+                    heightsub.subscribe(function(message){
+                        //document.getElementById("height").innerHTML = 
+                    });
+
+                    // gnsssub.subscribe(function(message)
+                    // {
+                    //     console.log(message);
+                    // });
+
+                    createJoystickleft();
+                    //createJoystickright();
+    
+                    ros.on('connection', function() {
+                    console.log('Connected to websocket server.');
+                    document.getElementById("welcome-modal").classList.remove('is-active');
+                    document.getElementById("camera").style.display="";
+                    });
+    
+                }
+               
+    
+                function opencamera()
+                {
+                if (camerastate == "off")
+                {
+                    camerastate = "on";
+                    document.getElementById("camera").style.display="";
+                }
+                else
+                {
+                    camerastate = "off";
+                    document.getElementById("camera").style.display="none";
+                }
+                }
+    
+                function openpointcloud()
+                {
+                if (cloudpoint == "off")
+                {
+                    cloudpoint = "on";
+                    document.getElementById("pointcloud").style.display="";
+                }
+                else
+                {
+                    cloudpoint = "off";
+                    document.getElementById("pointcloud").style.display="none";
+                }
+                }
+    
+               function manual()
+               {
+                //document.getElementById("mancmd").style.display="none";
+                document.getElementById("zone_joystick_left").style.display="";
+                lightctlpub.publish(lighton);
+                setTimeout(() => lightctlpub.publish(lightoff), 1000);
+                setTimeout(() => lightctlpub.publish(lighton), 2000);
+                setTimeout(() => lightctlpub.publish(lightoff), 3000);
+               }
+    
+               function autonomous()
+               {
+                //document.getElementById("mancmd").style.display="";
+                document.getElementById("zone_joystick_left").style.display="none";
+                lightctlpub.publish(lighton);
+                setTimeout(() => lightctlpub.publish(lightoff), 3000); 
+               }
+    
+               function runcmd()
+               {
+                autocmdpub.publish(run);
+               }
+    
+               function stopcmd()
+               {
+                autocmdpub.publish(stop);
+               }
+    
+               function go_leftcmd()
+               {
+                autocmdpub.publish(goleftroad);
+               }
+    
+               function go_rightcmd()
+               {
+                autocmdpub.publish(gorightroad);
+               }
+    
+               function stop_crashcmd()
+               {
+                autocmdpub.publish(stopcrash);
+               }
+    
+               function stop_sidecmd()
+               {
+                autocmdpub.publish(stopside);
+               }
+               
+                
+                function quaternionToEuler(x, y, z, w) {
+                // 计算roll（绕X轴旋转）
+                let sinr_cosp = 2.0 * (w * x + y * z);
+                let cosr_cosp = 1.0 - 2.0 * (x * x + y * y);
+                let roll = Math.atan2(sinr_cosp, cosr_cosp);
+    
+                // 计算pitch（绕Y轴旋转）
+                let sinp = 2.0 * (w * y - z * x);
+                let pitch = Math.asin(Math.max(-1, Math.min(1, sinp))); // 限制范围以避免NaN
+    
+                // 计算yaw（绕Z轴旋转）
+                let siny_cosp = 2.0 * (w * z + x * y);
+                let cosy_cosp = 1.0 - 2.0 * (y * y + z * z);
+                let yaw = Math.atan2(siny_cosp, cosy_cosp);
+    
+                // 转换为度数
+                roll = roll * (180 / Math.PI);
+                pitch = pitch * (180 / Math.PI);
+                yaw = yaw * (180 / Math.PI);
+                //console.log(roll,pitch,yaw)
+    
+                return { roll: roll, pitch: pitch, yaw: yaw };
+            }
+    
+            //slider
+            var osliderBlock = document.getElementById("slider");
+            var oPlayerNum = document.getElementById("player");
+            console.log(osliderBlock.value);
+    
+            function on_change() {
+                osliderBlock.value=oPlayerNum;//将玩家总人数赋值给滑块的值，实现动态变化
+                limitspeed();
+            }
+        function moveChange() {// 滑块的值改变，运行这个函数
+            oPlayerNum.value=osliderBlock.value;
+            limitspeed();
+            //滑块的值改变的话，滑块的值赋值给方框，实现动态变化
+        }
+        function less() {
+            let values = (parseFloat(oPlayerNum.value) - 1);
+            oPlayerNum.value = values;
+            console.log(oPlayerNum.value)
+            //减的按钮，减掉玩家总人数的值      
+            if (oPlayerNum.value<0){
+                oPlayerNum.value=0;
+                //人数超出范围的话，弹出警告框，并且将方框和滑块的值重置为6
+            }
+            else {
+                osliderBlock.value=oPlayerNum.value;// 将玩家人数赋值给滑轮的值
+            }
+        }
+        function plus() {
+            let values = (parseFloat(oPlayerNum.value) + 1);
+            oPlayerNum.value = values;
+            console.log(oPlayerNum.value);
+            //加的按钮，减掉玩家总人数的值，上面的值已经相互关联了，所以方框的值改变，滑块的值也会改变 
+            if (oPlayerNum.value>15){
+                oPlayerNum.value=15;
+                //人数超出范围的话，弹出警告框，并且将方框和滑块的值重置为18
+            }
+            else {
+                osliderBlock.value=oPlayerNum.value;// 将玩家人数赋值给滑轮的值
+            }
+        }
+
+        function stopcar(){
+            
+            if (stopflag == "off")
+            {
+                // document.getElementById("play-stop").innerHTML='<span class="icon is-medium" > <i class="fas fa-lg fa-play"></i></span>';
+                stopflag = "on";
+                document.getElementById("play-stop").innerHTML = '恢复';
+                document.getElementById("play-stop").style.backgroundColor = "#1a74fa";
+                stoppub.publish(car_stop);
+            }
+            else
+            {
+                // document.getElementById("play-stop").innerHTML='<span class="icon is-medium" > <i class="fas fa-lg fa-pause"></i></span>';
+                stopflag = "off";
+                document.getElementById("play-stop").innerHTML = '停止';
+                document.getElementById("play-stop").style.backgroundColor = "red";
+                stoppub.publish(car_run);
+            }
+        }
+
+        function setvel0(){
+            oPlayerNum.value = 0;
+            osliderBlock.value = 0;
+            limitspeed();
+            if (setvel != "0")
+            {
+                document.getElementById("set0").style.backgroundColor = '#1a74fa';
+                document.getElementById("set5").style.backgroundColor = 'white';
+                document.getElementById("set10").style.backgroundColor = 'white';
+                document.getElementById("set15").style.backgroundColor = 'white';
+                setvel = "0";
+                
+            }
+        }
+
+        function setvel5(){
+            oPlayerNum.value = 5;
+            osliderBlock.value = 5;
+            limitspeed();
+            if (setvel != "5")
+            {
+                document.getElementById("set0").style.backgroundColor = 'white';
+                document.getElementById("set5").style.backgroundColor = '#1a74fa';
+                document.getElementById("set10").style.backgroundColor = 'white';
+                document.getElementById("set15").style.backgroundColor = 'white';
+                setvel = "5";
+            }
+        }
+
+        function setvel10(){
+            oPlayerNum.value = 10;
+            osliderBlock.value = 10;
+            limitspeed();
+            if (setvel != "10")
+            {
+                document.getElementById("set0").style.backgroundColor = 'white';
+                document.getElementById("set5").style.backgroundColor = 'white';
+                document.getElementById("set10").style.backgroundColor = '#1a74fa';
+                document.getElementById("set15").style.backgroundColor = 'white';
+                setvel = "10";
+            }
+        }
+
+        function setvel15(){
+            oPlayerNum.value = 15;
+            osliderBlock.value = 15;
+            limitspeed();
+            if (setvel != "15")
+            {
+                document.getElementById("set0").style.backgroundColor = 'white';
+                document.getElementById("set5").style.backgroundColor = 'white';
+                document.getElementById("set10").style.backgroundColor = 'white';
+                document.getElementById("set15").style.backgroundColor = '#1a74fa';
+                setvel = "15";
+            }
+        }
+        function warnlight()
+        {
+            if (wranLightState == "off")
+            {
+                document.getElementById("warn-light").style.backgroundColor = "#42f5bc";
+                wranLightState = "on";
+                lightctlpub.publish(warnlighton);
+            }
+            else
+            {
+                document.getElementById("warn-light").style.backgroundColor = "#f8261d";
+                wranLightState = "off";
+                lightctlpub.publish(warnlightoff);
+            }
+        }
+
+        function toplight()
+        {
+            if (topLightState == "off")
+            {
+                document.getElementById("top-light").innerHTML = '<img width="100%" style="object-fit: cover;transform: rotate(90deg);" src="./images/Light-hb-on.png" />';
+                topLightState = "on";
+                lightctlpub.publish(frontlighton);
+            }
+            else
+            {
+                document.getElementById("top-light").innerHTML = '<img width="100%" style="object-fit: cover;transform: rotate(90deg);" src="./images/Light-hb-off.png" />';
+                topLightState = "off";
+                lightctlpub.publish(frontlightoff);
+            }
+        }
+
+        function shilight()
+        {
+            if (shiLightState == "off")
+            {
+                document.getElementById("shi-light").style.backgroundColor = "#42f5bc";
+                shiLightState = "on";
+                lightctlpub.publish(shilighton);
+            }
+            else
+            {
+                document.getElementById("shi-light").style.backgroundColor = "#009dff";
+                shiLightState = "off";
+                lightctlpub.publish(shilightoff);
+            }
+        }
+
+        function leftlight()
+        {
+            if (leftLightState == "off")
+            {
+                document.getElementById("left-light").innerHTML = '<img width="100%" style="object-fit: cover;" src="./images/Light-lr-on.png" />';
+                leftLightState = "on";
+                lightctlpub.publish(leftlighton);
+            }
+            else
+            {
+                document.getElementById("left-light").innerHTML = '<img width="100%" style="object-fit: cover;" src="./images/Light-lr-off.png" />';
+                leftLightState = "off";
+                lightctlpub.publish(shilightoff);
+            }
+        }
+
+        function speaker()
+        {
+            setTimeout(() => speakerpub.publish(speakeron), 0);
+            setTimeout(() => speakerpub.publish(speakeroff), 500);
+        }
+
+        function rightlight()
+        {
+            if (rightLightState == "off")
+            {
+                document.getElementById("right-light").innerHTML = '<img width="100%" style="object-fit: cover;transform: scaleX(-1);" src="./images/Light-lr-on.png" />';
+                rightLightState = "on";
+                lightctlpub.publish(rightlighton);
+            }
+            else
+            {
+                document.getElementById("right-light").innerHTML = '<img width="100%" style="object-fit: cover;transform: scaleX(-1);" src="./images/Light-lr-off.png" />';
+                rightLightState = "off";
+                lightctlpub.publish(rightlightoff);
+            }
+        }
+
+        function bottomlight()
+        {
+            if (bottomLightState == "off")
+            {
+                document.getElementById("bottom-light").innerHTML = '<img width="100%" style="object-fit: cover;transform: rotate(-90deg);" src="./images/Light-hb-on.png" />';
+                bottomLightState = "on";
+                lightctlpub.publish(backlighton);
+            }
+            else
+            {
+                document.getElementById("bottom-light").innerHTML = '<img width="100%" style="object-fit: cover;transform: rotate(-90deg);" src="./images/Light-hb-off.png" />';
+                bottomLightState = "off";
+                lightctlpub.publish(backlightoff);
+            }
+        }
+
+        function frontmovebucket()
+        {
+            if (bucketState == "off")
+            {
+            bucketpub.publish(bucket_up);
+            bucketState = "on";
+            }
+            else
+            {
+            bucketpub.publish(bucket_stop);
+            bucketState = "off";    
+            }
+        }
+
+        function backmovebucket()
+        {
+            if (bucketState == "off")
+            {
+            bucketpub.publish(bucket_down);
+            bucketState = "on";
+            }
+            else
+            {
+            bucketpub.publish(bucket_stop);
+            bucketState = "off";    
+            }
+        }
+
+        function frontmovearm()
+        {
+            if (armState == "off")
+            {
+            armpub.publish(arm_up);
+            armState = "on";
+            }
+            else
+            {
+            armpub.publish(arm_stop);
+            armState = "off";    
+            }
+        }
+
+        function backmovearm()
+        {
+            if (armState == "off")
+            {
+            armpub.publish(arm_down);
+            armState = "on";
+            }
+            else
+            {
+            armpub.publish(arm_stop);
+            armState = "off";    
+            }
+        }
+
+        function enginectl()
+        {
+            if (engineState == "off")
+            {
+            document.getElementById("engine").style.backgroundColor = "rgb(255 255, 255)";
+            document.getElementById("engine").innerText = "熄火";
+            engineState = "on";
+            enginepub.publish(engine_on);
+            }
+            else
+            {
+            document.getElementById("engine").style.backgroundColor = "rgb(26, 116, 250)";
+            document.getElementById("engine").innerHTML = "启动";
+            engineState = "off";
+            enginepub.publish(engine_off);
+            }
+        }
+        function modesel()
+        {
+            if (curMode == "人工")
+            {
+                document.getElementById("mode").innerHTML = "自动";
+                document.getElementById("mode").style.backgroundColor = "white";
+                curMode = "自动";
+                //document.getElementById("zone_joystick_left").style.display="none";
+                modepub.publish(auto);
+                lightctlpub.publish(frontlighton);
+                setTimeout(() => lightctlpub.publish(frontlightoff), 3000); 
+            }
+            else if (curMode == "自动")
+            {
+                document.getElementById("mode").innerHTML = "人工";
+                document.getElementById("mode").style.backgroundColor = "rgb(26, 116, 250)";
+                curMode = "人工";
+                //document.getElementById("zone_joystick_left").style.display="";
+                modepub.publish(man);
+                lightctlpub.publish(frontlighton);
+                setTimeout(() => lightctlpub.publish(frontlightoff), 1000);
+                setTimeout(() => lightctlpub.publish(frontlighton), 2000);
+                setTimeout(() => lightctlpub.publish(frontlightoff), 3000);
+            }
+        }
+
+        function limitspeed()
+        {
+            let val = parseInt(oPlayerNum.value);
+            var speedvel = new ROSLIB.Message({
+                data:val
+            });
+            speedlimitpub.publish(speedvel);
+        }
+    
+           </script>     
+        <script defer src="vendor/fontawesome-all.js"></script>
+        <script src="vendor/three.js"></script>
+        <script src="vendor/THREE.MeshLine.js"></script>
+        <script src="js/Utils.js"></script>
+        <script src="dist/PathPlannerWorker.js"></script>
+        <script src="dist/Dash.js"></script>
+	</body>
+</html>
